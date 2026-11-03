@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1820" media="(prefers-color-scheme: dark)">
+<title>ESI and MALDI explorer</title>
+<style>:root{--ink:#1f2d3a;--navy:#163e63;--steel:#326b9e;--muted:#566676;--rule:#cfdbe6;--panel:#f1f5f9;--bg:#ffffff;--grid:#e6edf3;--eqr:#c62828;--good:#2f7d4f;--warn:#9a5f12;--alert:#b23a48;--sta:#d9822b;--film:rgba(217,130,43,.22);--support:#c9d1da;--partEdge:#a9b6c4;
+--c0:#1f6fb0;--c1:#9a7b00;--c2:#22806b;--c3:#7a4fc4;--c4:#b8601a;--c5:#8a5a44;--c6:#c2185b;--c7:#0f8fa8;--c8:#556b2f;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--ink:#e3eaf1;--navy:#a9cdf0;--steel:#7fb0dc;--muted:#9fb0c0;--rule:#34475a;--panel:#17232f;--bg:#0f1820;--grid:#1f2e3b;--eqr:#ff8a80;--good:#74cf98;--warn:#e7b066;--alert:#f0828f;--sta:#f0a85a;--film:rgba(240,168,90,.18);--support:#2a3947;--partEdge:#5b6e82;
+--c0:#7fb6ee;--c1:#e0c25a;--c2:#5cc4a8;--c3:#b99cf5;--c4:#eba45f;--c5:#d1a58f;--c6:#f48fb1;--c7:#5fd0e6;--c8:#b5cf7a;color-scheme:dark}}
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Arial,Helvetica,sans-serif;overflow:hidden;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit}:focus-visible{outline:2px solid var(--steel);outline-offset:2px}
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh;padding:env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0)}
+header{display:flex;flex-wrap:wrap;row-gap:0;align-items:center;gap:8px;padding:6px 10px 7px;border-bottom:1px solid var(--rule);flex:0 0 auto}
+header .hrow{display:flex;align-items:center;gap:8px;width:100%}
+header .brand{flex:0 0 100%;font-size:.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
+header h1{flex:1 1 auto;min-width:0;font-size:1.02rem;margin:0;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:480px){header h1 .long{display:none}}
+header select.bigsel{border:1.5px solid var(--steel);border-radius:8px;background:var(--bg);color:var(--navy);padding:7px 8px;max-width:calc(100vw - 180px);font-size:.95rem;font-weight:700}
+@media (min-width:700px){header select.bigsel{min-width:240px;font-size:1.05rem;padding:8px 14px}}
+.btn{border:1px solid var(--steel);border-radius:6px;background:transparent;color:var(--navy);padding:5px 10px;cursor:pointer;font-size:.88rem}
+.btn:hover{background:var(--panel)}.btn[aria-pressed=true]{background:var(--navy);color:var(--bg);border-color:var(--navy)}
+.main{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+.left{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+.right{flex:0 0 auto;height:42%;min-height:190px;display:flex;flex-direction:column;border-top:1px solid var(--rule);background:var(--bg)}
+@media (max-height:700px){.right{height:40%}}
+@media (min-width:900px),(orientation:landscape) and (max-height:600px){.main{flex-direction:row}.right{height:auto;width:min(390px,40%);border-top:0;border-left:1px solid var(--rule)}}
+.right.collapsed{height:auto;min-height:0}.right.collapsed .pbody{display:none}.right.all #ptabs{display:none}
+.live{padding:6px 12px 4px;flex:0 0 auto}
+.live .l1{display:flex;align-items:baseline;gap:4px 12px;flex-wrap:wrap}
+.live .h{font-size:1.3rem;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums}
+.live .sub{font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.live .st{font-size:.82rem;font-weight:700;margin-left:auto}
+.live .l2{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:3px}
+.bar{display:flex;height:9px;border-radius:3px;overflow:hidden;background:var(--grid);margin:4px 0 2px}.bar span{display:block;height:100%}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:0}
+.seg{display:flex;gap:4px;padding:4px 10px;flex:0 0 auto;overflow-x:auto;scrollbar-width:none}.seg::-webkit-scrollbar{display:none}
+.seg button{flex:1 0 auto;border:1px solid var(--rule);background:var(--bg);color:var(--navy);border-radius:7px;padding:5px 9px;font-size:.86rem;cursor:pointer;white-space:nowrap}
+.seg button[aria-selected=true]{background:var(--navy);border-color:var(--navy);color:var(--bg)}
+.seg button .v{font-size:.72rem;opacity:.85;display:block;font-variant-numeric:tabular-nums}
+.seg .fold{flex:0 0 auto;min-width:40px;font-size:1rem}
+.stage{position:relative;flex:1 1 auto;min-height:170px;margin:0 10px 8px;border:1px solid var(--rule);border-radius:10px;overflow:hidden;background:var(--bg)}
+.view{position:absolute;inset:0;display:none}.view.on{display:flex;flex-direction:column}
+.fill{flex:1 1 auto;min-height:0;position:relative}
+svg.full,canvas.full{width:100%;height:100%;display:block}
+.ax{stroke:var(--muted);stroke-width:1}.gl{stroke:var(--grid);stroke-width:1}.tk{fill:var(--muted);font-size:11px}.axt{fill:var(--ink);font-size:12px}
+.halo{paint-order:stroke;stroke:var(--bg);stroke-width:4px;stroke-linejoin:round}
+.hint{position:absolute;left:52px;top:6px;font-size:.72rem;color:var(--muted);pointer-events:none;transition:opacity .3s}
+.ovl{position:absolute;font-size:.74rem;color:var(--muted);pointer-events:none}.ovl.tl{left:8px;top:6px;right:8px}
+.ovl.br{right:6px;bottom:6px;pointer-events:auto;display:flex;gap:4px}.ovl.br .btn{background:var(--bg);padding:3px 8px;font-size:.8rem}
+.mtop{display:flex;gap:6px;align-items:center;padding:5px 6px;flex:0 0 auto;overflow-x:auto;scrollbar-width:none}.mtop .sp{flex:1}
+.mtop .lab{font-size:.78rem;color:var(--muted);white-space:nowrap}
+.cap{position:absolute;left:6px;right:6px;bottom:6px;max-height:72%;overflow:auto;background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:8px 10px;font-size:.84rem;display:none}.cap.on{display:block}
+.scroll{overflow:auto;padding:8px 12px}
+.scroll table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:.84rem}
+.scroll th{font-weight:400;color:var(--muted);text-align:right;padding:4px;border-bottom:1px solid var(--rule)}
+.scroll td{padding:5px 4px;border-bottom:1px solid var(--rule);text-align:right}
+.scroll th:first-child,.scroll td:first-child{text-align:left}
+.scroll h3{font-size:.9rem;margin:10px 0 2px;color:var(--navy)}.scroll p{margin:6px 0;font-size:.86rem}
+.wrapx{overflow-x:auto}
+.pbody{flex:1 1 auto;min-height:0;overflow:auto;padding:2px 12px 10px}
+.row{margin:8px 0 4px}.row .top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.88rem}
+.row .val{border:1px dashed var(--steel);background:transparent;color:var(--ink);border-radius:5px;padding:1px 7px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;cursor:text;font-size:.88rem}
+.row input[type=range]{width:100%;accent-color:var(--steel);margin:4px 0 0;height:26px}
+.row input[type=text]{width:100%;padding:6px 8px;border:1px solid var(--steel);border-radius:6px;background:var(--bg);color:var(--ink);font-size:16px}
+.row select{width:100%;margin-top:4px;padding:6px 8px;border:1px solid var(--steel);border-radius:6px;background:var(--bg);color:var(--ink);font-size:16px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin:5px 0}
+.eq{font-family:"Times New Roman",Times,serif;font-size:.95rem;color:var(--muted);margin:3px 0 0;line-height:1.35}
+.eq .r{color:var(--eqr);font-weight:700}.eq .n{font-family:Arial,Helvetica,sans-serif;font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.ptext{font-size:.8rem;color:var(--muted);margin:6px 0 4px}
+.info{font-size:.8rem;color:var(--muted);background:var(--panel);border-radius:6px;padding:6px 8px;margin:8px 0 2px}
+.warnbox{font-size:.8rem;color:var(--warn);font-weight:700;margin:4px 0}
+.chk{display:flex;gap:8px;align-items:center;font-size:.88rem;cursor:pointer;padding:5px 0}.chk input{width:19px;height:19px;accent-color:var(--steel)}
+.ghead{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 0;padding-top:8px;border-top:1px solid var(--rule)}
+.ghead:first-child{border-top:0;margin-top:4px}.ghead h2{font-size:.98rem;margin:0;color:var(--navy)}.ghead span{font-size:.82rem;font-weight:700;font-variant-numeric:tabular-nums}
+.forms{display:flex;gap:6px 14px;overflow-x:auto;padding:4px 8px 2px;flex:0 0 auto;scrollbar-width:none;border-bottom:1px solid var(--rule)}.forms::-webkit-scrollbar{display:none}
+.forms .fm{display:flex;flex-direction:column;align-items:center;flex:0 0 auto;font-size:.72rem;line-height:1.2;text-align:center}.forms .fm span{color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;padding:10px;overflow:auto}
+.card{border:1px solid var(--rule);border-radius:8px;padding:9px 12px}.card h3{margin:0 0 2px;font-size:.95rem}.card p{margin:4px 0;font-size:.85rem}.card .cost{color:var(--muted)}
+.gauge{height:9px;background:var(--grid);border-radius:5px;overflow:hidden;margin:5px 0}.gauge span{display:block;height:100%}
+dialog{border:1px solid var(--rule);border-radius:12px;padding:0;max-width:660px;width:calc(100% - 20px);max-height:calc(100dvh - 40px);background:var(--bg);color:var(--ink)}
+dialog::backdrop{background:rgba(10,20,30,.45)}
+.dhead{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--rule);position:sticky;top:0;background:var(--bg)}
+.dhead h2{margin:0;font-size:1.05rem;color:var(--navy)}.dbody{padding:4px 16px 16px;font-size:.92rem}.dbody h3{font-size:.98rem;color:var(--navy);margin:14px 0 4px}.dbody p{margin:6px 0}.dbody .note{color:var(--muted);font-size:.85rem}
+.fallback{margin:auto;padding:20px;text-align:center;color:var(--muted)}
+#spcalc{flex:0 0 auto;max-height:42%;overflow:auto;border-top:1px solid var(--rule);padding:6px 4px 2px;font-size:.84rem;line-height:1.45}
+#spcalc .calcnote{margin:4px 2px;color:var(--muted)}#spcalc .steps{margin:2px 0 2px 1.2em;padding:0}#spcalc .steps li{margin-bottom:4px}</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">Interactive Chemistry · Ali Shafiee · University of Florida</div>
+    <div class="hrow"><h1>ESI and MALDI<span class="long"> explorer</span></h1>
+    <select id="mode" class="bigsel" aria-label="Ionization method"><option value="esi">Electrospray (ESI)</option><option value="maldi">MALDI</option></select>
+    <button type="button" class="btn" id="guideBtn">Guide</button></div>
+  </header>
+  <div class="main">
+    <section class="left" aria-label="Results">
+      <div class="live" aria-live="polite"><div id="live"></div></div>
+      <div class="seg" role="tablist" aria-label="View" id="vtabs"></div>
+      <div class="stage" id="stage"><div class="view" id="v-src" role="tabpanel" aria-label="Spray"><div class="mtop"><span class="lab" id="srclab">Inside the source</span><span class="sp"></span><button type="button" class="btn playbtn" aria-pressed="false">Pause</button></div><div class="fill"><canvas class="full" id="cvs" role="img" aria-label="Animation of the ion source"></canvas></div></div><div class="view" id="v-mic" role="tabpanel" aria-label="Droplet"><div class="mtop"><span class="lab">Slow motion, not to scale</span><span class="sp"></span><button type="button" class="btn playbtn" aria-pressed="false">Pause</button></div><div class="fill"><canvas class="full" id="cvm" role="img" aria-label="Droplet history or time-of-flight animation"></canvas></div></div><div class="view" id="v-spec" role="tabpanel" aria-label="Spectrum"><div class="mtop" id="spbar"><div class="chips"><button type="button" class="btn" id="zf" aria-pressed="true">Full range</button><button type="button" class="btn" id="zz" aria-pressed="false">Zoom on [M+H]⁺</button></div></div><div class="fill" style="min-height:0"><svg class="full" id="spsv" role="img" aria-label="Mass spectrum"></svg></div><div id="spcalc" class="scroll"></div></div><div class="view" id="v-cmp" role="tabpanel" aria-label="ESI vs MALDI"><div class="mtop"><span class="lab" id="cmpt"></span></div><div class="fill" style="display:flex;flex-direction:column;gap:6px"><svg id="cmp1" style="flex:1;width:100%;min-height:0" role="img" aria-label="ESI spectrum"></svg><svg id="cmp2" style="flex:1;width:100%;min-height:0" role="img" aria-label="MALDI spectrum"></svg></div></div><div class="view" id="v-nums" role="tabpanel" aria-label="Numbers"><div class="scroll" id="nmz" style="flex:1"></div></div></div>
+    </section>
+    <section class="right" aria-label="Controls">
+      <div class="seg" role="tablist" aria-label="Control group" id="ptabs"><button type="button" class="fold" id="fold" aria-expanded="true" aria-label="Hide the controls to enlarge the view">▾</button></div>
+      <div class="pbody" id="pbody" role="tabpanel"></div>
+    </section>
+  </div>
+</div>
+<dialog id="guide" aria-labelledby="gTitle">
+  <div class="dhead"><h2 id="gTitle">Guide</h2><button type="button" class="btn" id="guideClose">Close</button></div>
+  <div class="dbody"><p class="note" style="margin-top:10px">Interactive Chemistry · Ali Shafiee · University of Florida</p><h3>Two soft ways to make ions</h3><p>Electrospray (ESI) and matrix-assisted laser desorption/ionization (MALDI) turn large, fragile molecules such as peptides and proteins into gas-phase ions without breaking them. Switch between them with the menu at the top.</p>
+<h3>Electrospray</h3><p><b>Taylor cone.</b> The metal capillary is held at +3 to 5 kV and the inlet at ground. Positive ions in the liquid move to the surface at the tip and pull it into a cone; a jet from its tip breaks into charged droplets. Spraying starts above the onset voltage V<sub>on</sub> = √(r<sub>c</sub>γcos49°/2ε<sub>0</sub>)·ln(4d/r<sub>c</sub>), which grows with the surface tension γ. That is why water alone sprays poorly and methanol or acetonitrile is added; far above onset the spray breaks into several jets and corona discharge becomes likely.</p>
+<p><b>Evaporation and fission.</b> Warm drying gas evaporates the solvent but the charge stays, so the droplet shrinks until its charge reaches the Rayleigh limit, q<sub>R</sub> = 8π√(ε<sub>0</sub>γr³), where charge repulsion matches surface tension. It then splits, shedding about 2% of its mass but 15% of its charge, and the cycle repeats until the droplets are nanometers across.</p>
+<p><b>Ion release.</b> Small ions are pushed out of a tiny, highly charged droplet by the field at its surface (ion evaporation, Iribarne and Thomson). Peptides and proteins stay until the last solvent is gone and keep the remaining protons on their basic sites (charged residue, Dole).</p>
+<p><b>Why many charge states.</b> Droplets differ in size and charge, so identical molecules end up with different numbers of protons, each giving its own peak at m/z = (M + n·m<sub>H</sub>)/n. Two neighboring peaks are enough to find n and M: n = (m/z<sub>n+1</sub> − m<sub>H</sub>)/(m/z<sub>n</sub> − m/z<sub>n+1</sub>), then M = n(m/z<sub>n</sub> − m<sub>H</sub>). Denatured proteins in acidic solution carry more charges than folded ones, whose average charge is close to 0.078√M.</p>
+<h3>MALDI</h3><p><b>Sample spot.</b> The analyte is mixed with a large excess (about 1,000 to 10,000 times) of a UV-absorbing matrix such as DHB, CHCA or sinapinic acid. As the spot dries, the matrix crystallizes and keeps analyte molecules apart.</p>
+<p><b>Laser and ablation.</b> A nanosecond UV pulse (337 or 355 nm) is absorbed by the matrix, not the analyte. Above a threshold fluence the top of the crystal erupts into a plume; well above it, analyte ions fragment and peaks broaden.</p>
+<p><b>Proton transfer.</b> In the hot plume, M* + M → MH⁺ + (M−H)⁻, then MH⁺ + A → AH⁺ + M, because the analyte holds a proton more strongly than the matrix.</p>
+<p><b>Time of flight.</b> The target at +20 kV pushes positive ions through a grounded grid. Every ion gets the same kinetic energy, zeV = ½mv², so it reaches the detector after t = L√(m/2zeV): lighter ions first. A reflectron (ion mirror) sharpens peptide peaks; large proteins are measured in linear mode. MALDI gives mostly singly charged ions, so the main peak is [M+H]⁺, with small [M+2H]²⁺ and [2M+H]⁺ peaks.</p>
+<p class="note">Schematic, not to scale; animations are in slow motion. Peak positions are calculated; peak heights are illustrative. ESI masses and charge ranges from Fenn et al., Science 246, 64 (1989): Fig. 9 for cytochrome c and myoglobin, Table 1 for the others. Onset voltage after Smith (1986); fission behavior after Gomez and Tang (1994). Matrix ion masses are monoisotopic; m<sub>H</sub> = 1.007276 Da.</p></div>
+</dialog>
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+function clamp(x,a,b){return Math.max(a,Math.min(b,x));}
+function gauss(){var u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function sig(x,n){if(x===0)return '0';if(!isFinite(x))return '–';var a=Math.abs(x);if(a>=1e5)return Math.round(x).toLocaleString('en-US');var d=Math.max(0,n-1-Math.floor(Math.log10(a)));return x.toFixed(Math.min(d,6));}
+var SUPD={'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+function sup(n){return String(n).split('').map(function(c){return SUPD[c]||c;}).join('');}
+function sci(x,d){if(x===0)return '0';var e=Math.floor(Math.log10(Math.abs(x))),m=x/Math.pow(10,e);var ms=m.toFixed(d==null?1:d);if(Math.abs(+ms)>=10){e++;ms=(m/10).toFixed(d==null?1:d);}return ms+' × 10'+sup(e);}
+function minus(s){return String(s).replace(/-/g,'−');}
+var NS='http://www.w3.org/2000/svg';
+function el(tag,a,txt){var e=document.createElementNS(NS,tag);for(var k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;return e;}
+function clearSvg(s){while(s.firstChild)s.removeChild(s.firstChild);}
+function niceStep(span,n){var raw=span/(n||5),p=Math.pow(10,Math.floor(Math.log10(raw))),m=raw/p;return (m<=1?1:m<=2?2:m<=2.5?2.5:m<=5?5:10)*p;}
+function gN(t,c,s){var z=(t-c)/s;return Math.exp(-0.5*z*z)/(s*2.5066283);}
+function R_(x){return '<span class="r">'+x+'</span>';}function N_(x){return '<span class="n">'+x+'</span>';}
+function svgSize(svg){var W=Math.max(200,svg.clientWidth),H=Math.max(120,svg.clientHeight);svg.setAttribute('viewBox','0 0 '+W+' '+H);clearSvg(svg);return [W,H];}
+var PAL={};function readPal(){var cs=getComputedStyle(document.documentElement);['ink','navy','steel','muted','rule','panel','bg','grid','eqr','good','warn','alert','sta','film','support','partEdge','c0','c1','c2','c3','c4','c5','c6','c7','c8'].concat(APP.pal||[]).forEach(function(k){PAL[k]=cs.getPropertyValue('--'+k).trim();});}
+function isDark(){return window.matchMedia('(prefers-color-scheme: dark)').matches;}
+/* ---------- controls ---------- */
+var EQ={},CTL={},running=!window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function addEq(box,id,fn){if(!fn)return;EQ[id]=fn;var d=document.createElement('div');d.className='eq';d.setAttribute('data-eq',id);box.appendChild(d);}
+function ctlSlider(box,o){
+  var row=document.createElement('div');row.className='row';row.innerHTML='<div class="top"><label for="s_'+o.id+'">'+o.label+'</label></div>';
+  var vb=document.createElement('button');vb.type='button';vb.className='val';vb.setAttribute('aria-label','Type a value for '+o.label.replace(/<[^>]+>/g,''));row.querySelector('.top').appendChild(vb);
+  addEq(row,o.id,o.eq);
+  var inp=document.createElement('input');inp.type='range';inp.id='s_'+o.id;
+  if(o.log){inp.min=Math.log10(o.min);inp.max=Math.log10(o.max);inp.step=0.005;}else{inp.min=o.min;inp.max=o.max;inp.step=o.step;}
+  row.appendChild(inp);
+  function show(){var v=o.get();vb.textContent=o.fmt(v);inp.value=o.log?Math.log10(v):v;inp.setAttribute('aria-valuetext',o.fmt(v));}
+  inp.addEventListener('input',function(){o.set(o.log?Math.pow(10,+inp.value):+inp.value);show();update(o.re);});
+  vb.addEventListener('click',function(){var ti=document.createElement('input');ti.type='text';ti.inputMode='decimal';ti.value=String(+o.get().toPrecision(4));
+    ti.setAttribute('aria-label',o.label.replace(/<[^>]+>/g,'')+' ('+o.min+' to '+o.max+')');ti.style.cssText='width:8em;padding:2px 6px;border:1px solid var(--steel);border-radius:5px;background:var(--bg);color:var(--ink);font-size:16px;text-align:right';
+    vb.replaceWith(ti);ti.focus();ti.select();var done=false;
+    function fin(a){if(done)return;done=true;if(a){var x=parseFloat(String(ti.value).replace('×10','e').replace(/\s/g,''));if(isFinite(x))o.set(clamp(x,o.min,o.max));}ti.replaceWith(vb);show();update(o.re);}
+    ti.addEventListener('blur',function(){fin(true);});ti.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();fin(true);}else if(e.key==='Escape')fin(false);});});
+  box.appendChild(row);show();CTL[o.id]={show:show};return row;
+}
+function ctlChips(box,o){
+  var row=document.createElement('div');row.className='row';row.innerHTML='<div class="top"><span>'+o.label+'</span></div>';
+  var ch=document.createElement('div');ch.className='chips';ch.setAttribute('role','group');ch.setAttribute('aria-label',o.label.replace(/<[^>]+>/g,''));
+  o.options.forEach(function(op){var b=document.createElement('button');b.type='button';b.className='btn';b.innerHTML=op[1];b.setAttribute('aria-pressed',o.get()===op[0]?'true':'false');
+    b.addEventListener('click',function(){o.set(op[0]);ch.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});if(o.rebuild)buildPanel();update(o.re);});ch.appendChild(b);});
+  row.appendChild(ch);addEq(row,o.id,o.eq);box.appendChild(row);return row;
+}
+function ctlSelect(box,o){
+  var row=document.createElement('div');row.className='row';row.innerHTML='<div class="top"><label for="q_'+o.id+'">'+o.label+'</label></div>';
+  var sel=document.createElement('select');sel.id='q_'+o.id;o.options.forEach(function(op){var x=document.createElement('option');x.value=op[0];x.textContent=op[1];sel.appendChild(x);});sel.value=o.get();
+  sel.addEventListener('change',function(){o.set(sel.value);if(o.rebuild)buildPanel();update(o.re);});row.appendChild(sel);addEq(row,o.id,o.eq);box.appendChild(row);return row;
+}
+function ctlCheck(box,o){var l=document.createElement('label');l.className='chk';l.innerHTML='<input type="checkbox"'+(o.get()?' checked':'')+'> '+o.label;l.querySelector('input').addEventListener('change',function(){o.set(this.checked);if(o.rebuild)buildPanel();update(o.re);});box.appendChild(l);return l;}
+function ctlText(box,o){var row=document.createElement('div');row.className='row';row.innerHTML='<div class="top"><label for="t_'+o.id+'">'+o.label+'</label><span class="warnbox" id="tw_'+o.id+'"></span></div>';
+  var t=document.createElement('input');t.type='text';t.id='t_'+o.id;t.value=o.get();t.autocapitalize='off';t.spellcheck=false;t.setAttribute('autocomplete','off');
+  t.addEventListener('input',function(){var err=o.set(t.value);$('tw_'+o.id).textContent=err||'';if(!err)update(o.re);});row.appendChild(t);addEq(row,o.id,o.eq);box.appendChild(row);CTL[o.id]={input:t};return row;}
+function ctlNote(box,html,cls){var p=document.createElement('p');p.className=cls||'ptext';p.innerHTML=html;box.appendChild(p);return p;}
+function refreshEq(){document.querySelectorAll('.eq[data-eq]').forEach(function(e){var f=EQ[e.getAttribute('data-eq')];if(f)e.innerHTML=f();});}
+/* ---------- panel ---------- */
+var pgroup=null,MQall=window.matchMedia('(min-width:900px) and (min-height:640px)');
+function buildPanel(){
+  var box=$('pbody'),all=MQall.matches,groups=APP.groups();box.innerHTML='';EQ={};CTL={};
+  if(!groups.some(function(g){return g.id===pgroup;}))pgroup=groups[0].id;
+  var tabs=$('ptabs');tabs.querySelectorAll('[role=tab]').forEach(function(b){b.remove();});
+  groups.forEach(function(g){var b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.setAttribute('data-p',g.id);b.setAttribute('aria-selected',g.id===pgroup?'true':'false');b.innerHTML=g.tab+'<span class="v" id="pv-'+g.id+'"></span>';
+    b.addEventListener('click',function(){pgroup=g.id;setFold(false);buildPanel();box.scrollTop=0;});tabs.insertBefore(b,$('fold'));});
+  document.querySelector('.right').classList.toggle('all',all);
+  if(all)groups.forEach(function(g){var hd=document.createElement('div');hd.className='ghead';hd.innerHTML='<h2>'+g.title+'</h2><span id="gh-'+g.id+'"></span>';box.appendChild(hd);g.render(box);});
+  else groups.filter(function(g){return g.id===pgroup;})[0].render(box);
+  var rb=document.createElement('button');rb.type='button';rb.className='btn';rb.style.marginTop='12px';rb.textContent='Reset all to defaults';
+  rb.addEventListener('click',function(){APP.reset();buildPanel();update(true);});box.appendChild(rb);
+  if(APP.S){APP.compute();refreshEq();}if(APP.tabVals)APP.tabVals();
+}
+function tabVal(id,txt){var a=$('pv-'+id);if(a)a.textContent=txt;var b=$('gh-'+id);if(b)b.textContent=txt;}
+function setFold(c){var r=document.querySelector('.right');r.classList.toggle('collapsed',c);var f=$('fold');f.textContent=c?'▴':'▾';f.setAttribute('aria-expanded',c?'false':'true');f.setAttribute('aria-label',c?'Show the controls':'Hide the controls to enlarge the view');}
+/* ---------- views ---------- */
+var view=null;
+function V(){return APP.views.filter(function(v){return v.id===view;})[0];}
+function setView(id){view=id;document.querySelectorAll('#vtabs [role=tab]').forEach(function(b){b.setAttribute('aria-selected',b.getAttribute('data-view')===id?'true':'false');});
+  APP.views.forEach(function(v){$('v-'+v.id).classList.toggle('on',v.id===id);});var v=V();if(v.enter)v.enter();if(v.draw)v.draw();}
+function update(re){APP.compute();APP.live();refreshEq();if(APP.tabVals)APP.tabVals();var v=V();if(v){if(re&&v.reset)v.reset();if(v.draw)v.draw();}}
+var last=0;function loop(ts){if(!running)return;var dt=last?Math.min(0.05,(ts-last)/1000):0;last=ts;var v=V();if(!document.hidden&&v&&v.step){v.step(dt);if(v.draw)v.draw(true);}requestAnimationFrame(loop);}
+function setPlay(on){running=on;document.querySelectorAll('.playbtn').forEach(function(b){b.textContent=on?'Pause':'Play';b.setAttribute('aria-pressed',on?'false':'true');});if(on){last=0;requestAnimationFrame(loop);}}
+function boot(){
+  readPal();
+  var vt=$('vtabs');APP.views.forEach(function(v){var b=document.createElement('button');b.type='button';b.setAttribute('role','tab');b.setAttribute('data-view',v.id);b.textContent=v.label;b.addEventListener('click',function(){setView(v.id);});vt.appendChild(b);});
+  $('fold').addEventListener('click',function(){setFold(!document.querySelector('.right').classList.contains('collapsed'));});
+  document.querySelectorAll('.playbtn').forEach(function(b){b.addEventListener('click',function(){setPlay(!running);});});
+  var g=$('guide');$('guideBtn').addEventListener('click',function(){if(g.showModal)g.showModal();else g.setAttribute('open','');});
+  $('guideClose').addEventListener('click',function(){if(g.close)g.close();else g.removeAttribute('open');});g.addEventListener('click',function(e){if(e.target===g&&g.close)g.close();});
+  document.querySelectorAll('[data-cap]').forEach(function(b){b.addEventListener('click',function(){var c=$(b.getAttribute('data-cap')),on=!c.classList.contains('on');c.classList.toggle('on',on);b.setAttribute('aria-expanded',on?'true':'false');b.textContent=on?'Hide':'Explain';});});
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){readPal();if(APP.theme)APP.theme();var v=V();if(v&&v.draw)v.draw();});
+  MQall.addEventListener('change',buildPanel);
+  new ResizeObserver(function(){var v=V();if(v){if(v.resize)v.resize();if(v.draw)v.draw();}}).observe($('stage'));
+  if(APP.init)APP.init();
+  APP.compute();buildPanel();APP.live();
+  var h=(location.hash||'').slice(1);setView(APP.views[0].id);if(h&&APP.hash)APP.hash(h);
+  if(running)requestAnimationFrame(loop);else setPlay(false);
+}
+
+var APP={pal:[]};
+/* line-angle structure engine: def = {a:[{x,y,l,li,ionOnly}], b:[[i,j,order,cx?,cy?,ionOnly?]]} ; y up, bond length 1 */
+var HEXV=[[0,1],[0.866,0.5],[0.866,-0.5],[0,-1],[-0.866,-0.5],[-0.866,0.5]];
+function ringA(lbl,dx,dy){dx=dx||0;dy=dy||0;return HEXV.map(function(p,i){return {x:p[0]+dx,y:p[1]+dy,l:(lbl&&lbl[i])||''};});}
+function ringB(o,cx,cy,arom){o=o||0;cx=cx||0;cy=cy||0;var b=[];for(var i=0;i<6;i++){var dbl=arom!==false&&i%2===0;b.push(dbl?[o+i,o+(i+1)%6,2,cx,cy]:[o+i,o+(i+1)%6,1]);}return b;}
+function molSVG(d,ion,s,col){
+  var A=d.a.filter(function(x){return ion||!x.ionOnly;}),pad=0.75,fs=Math.max(9,0.66*s);
+  var xs=A.map(function(a){return a.x;}),ys=A.map(function(a){return a.y;});
+  var x0=Math.min.apply(null,xs)-pad,x1=Math.max.apply(null,xs)+pad,y0=Math.min.apply(null,ys)-pad,y1=Math.max.apply(null,ys)+pad;
+  function P(a){return [(a.x-x0)*s,(y1-a.y)*s];}
+  var out='';
+  d.b.forEach(function(b){
+    if(b[5]&&!ion)return;
+    var A1=d.a[b[0]],A2=d.a[b[1]],p1=P(A1),p2=P(A2),dx=p2[0]-p1[0],dy=p2[1]-p1[1],L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,nx=-uy,ny=ux;
+    var l1=(ion&&A1.li)?A1.li:A1.l,l2=(ion&&A2.li)?A2.li:A2.l,c1=l1?0.42*s:0,c2=l2?0.42*s:0;
+    var q1=[p1[0]+ux*c1,p1[1]+uy*c1],q2=[p2[0]-ux*c2,p2[1]-uy*c2];
+    function ln(a,e){out+='<line x1="'+a[0].toFixed(1)+'" y1="'+a[1].toFixed(1)+'" x2="'+e[0].toFixed(1)+'" y2="'+e[1].toFixed(1)+'"/>';}
+    var ringD=b[2]===2&&b[3]!=null;
+    if(b[2]===2&&!ringD){var o=0.11*s;ln([q1[0]+nx*o,q1[1]+ny*o],[q2[0]+nx*o,q2[1]+ny*o]);ln([q1[0]-nx*o,q1[1]-ny*o],[q2[0]-nx*o,q2[1]-ny*o]);return;}
+    ln(q1,q2);
+    if(ringD){var cx0=(b[3]-x0)*s,cy0=(y1-b[4])*s,mx=(p1[0]+p2[0])/2,my=(p1[1]+p2[1])/2;if((cx0-mx)*nx+(cy0-my)*ny<0){nx=-nx;ny=-ny;}var o2=0.19*s,sh=0.17*L;
+      ln([q1[0]+nx*o2+ux*sh,q1[1]+ny*o2+uy*sh],[q2[0]+nx*o2-ux*sh,q2[1]+ny*o2-uy*sh]);}
+  });
+  var g='<g stroke="'+col+'" stroke-width="'+Math.max(1.2,s/9).toFixed(2)+'" stroke-linecap="round" fill="none">'+out+'</g>';
+  A.forEach(function(a){var lb=(ion&&a.li)?a.li:a.l;if(!lb)return;var p=P(a),ch=ion&&(a.li||a.ionOnly)&&/[⁺⁻+]/.test(lb);
+    g+='<text x="'+p[0].toFixed(1)+'" y="'+p[1].toFixed(1)+'" text-anchor="middle" dominant-baseline="central" font-family="Arial,Helvetica,sans-serif" font-size="'+fs.toFixed(1)+'" font-weight="'+(ch?'700':'400')+'" fill="'+(ch?'var(--eqr)':col)+'" style="paint-order:stroke;stroke:var(--bg);stroke-width:3px;stroke-linejoin:round">'+lb+'</text>';});
+  return {w:(x1-x0)*s,h:(y1-y0)*s,svg:g};
+}
+function molInline(d,ion,s,col){var m=molSVG(d,ion,s,col);return '<svg width="'+m.w.toFixed(0)+'" height="'+m.h.toFixed(0)+'" viewBox="0 0 '+m.w.toFixed(1)+' '+m.h.toFixed(1)+'" aria-hidden="true">'+m.svg+'</svg>';}
+function chain(n,dx,dy){var a=[];for(var i=0;i<n;i++)a.push({x:(dx||0)+i*0.866,y:(dy||0)+(i%2)*0.5});var b=[];for(i=1;i<n;i++)b.push([i-1,i,1]);return {a:a,b:b};}
+var MH=1.007276,EPS0=8.854e-12,QE=1.602177e-19,DA=1.66054e-27,ORG={MeOH:{n:'methanol',g:0.0226,ev:1.6},ACN:{n:'acetonitrile',g:0.0290,ev:1.3}},GW=0.0720;
+var PROT=[['Insulin',5730,4,6],['Cytochrome c',12360.1,12,21],['Lysozyme',14300,10,13],['Myoglobin',16950.7,16,27],['α-Chymotrypsinogen A',25700,17,22],['Alcohol dehydrogenase',39800,32,46],['α-Amylase',54700,35,58],['Conalbumin',76000,49,64]];
+function dhb(){var a=ringA(),b=ringB();a.push({x:0,y:2},{x:-0.866,y:2.5,l:'O'},{x:0.866,y:2.5,l:'OH'},{x:1.732,y:1,l:'OH'},{x:-1.732,y:-1,l:'OH'});return {a:a,b:b.concat([[0,6,1],[6,7,2],[6,8,1],[1,9,1],[4,10,1]])};}
+function cinn(subs){var a=ringA(),b=ringB();a.push({x:0,y:2},{x:0.866,y:2.5},{x:0.866,y:3.5},{x:1.732,y:2},{x:2.598,y:2.5,l:'O'},{x:1.732,y:1,l:'OH'});b=b.concat([[0,6,1],[6,7,2],[7,9,1],[9,10,2],[9,11,1]]);
+  if(subs==='chca'){a[8].l='CN';b.push([7,8,1]);}else{a[8].l='H';b.push([7,8,1]);}
+  a.push({x:0,y:-2,l:'OH'});b.push([3,a.length-1,1]);if(subs==='sa'){a.push({x:1.732,y:-1,l:'OCH₃'},{x:-1.732,y:-1,l:'OCH₃'});b.push([2,a.length-2,1],[4,a.length-1,1]);}return {a:a,b:b};}
+var MATRIX={DHB:{n:'2,5-Dihydroxybenzoic acid (DHB)',M:154.12,ions:[[137.02,'[M+H−H₂O]⁺'],[155.03,'[M+H]⁺'],[177.02,'[M+Na]⁺'],[273.04,'[2M+H−2H₂O]⁺']],good:[0.8,0.8,0.6],s:dhb},
+ CHCA:{n:'α-Cyano-4-hydroxycinnamic acid (CHCA)',M:189.17,ions:[[172.04,'[M+H−H₂O]⁺'],[190.05,'[M+H]⁺'],[212.03,'[M+Na]⁺'],[379.09,'[2M+H]⁺']],good:[1,0.55,0.2],s:function(){return cinn('chca');}},
+ SA:{n:'Sinapinic acid (SA)',M:224.21,ions:[[207.07,'[M+H−H₂O]⁺'],[225.08,'[M+H]⁺'],[247.06,'[M+Na]⁺'],[449.15,'[2M+H]⁺']],good:[0.35,0.9,1],s:function(){return cinn('sa');}}};
+var MANA=[['Angiotensin II (peptide)',1045.53,0],['Insulin',5733.5,1],['Cytochrome c',12360.1,2],['Myoglobin',16950.7,2],['Bovine serum albumin',66430,2]];
+function D0(){return {mode:'esi',org:'MeOH',x:50,V:2.5,d:20,rc:50,r0:1.5,T:250,an:'protein',p:1,conf:'fenn',pick:[],mat:'SA',ma:2,ratio:5000,lam:337,F:1.5,Vt:20,L:1.5,refl:false,zoom:false};}
+var S=D0(),C={};
+function gam(){var o=ORG[S.org],f=S.x/100;return o.g+(GW-o.g)*Math.pow(1-f,2.2);}
+function qR(r,g){return 8*Math.PI*Math.sqrt(EPS0*g*r*r*r);}
+function computeESI(){var g=gam(),rc=S.rc*1e-6,d=S.d*1e-3;C.g=g;C.Von=Math.sqrt(rc*g*Math.cos(49*Math.PI/180)/(2*EPS0))*Math.log(4*d/rc)/1000;
+  C.reg=S.V<C.Von?'none':(S.V<1.6*C.Von?'cone':'multi');
+  var K=2.0*Math.exp((S.T-250)/80)*(1+ORG[S.org].ev*S.x/100),r=S.r0*1e-6,q=0.7*qR(r,g),t=0,ev=[{t:0,r:r,q:q}],n=0;C.K=K;C.q0=q;C.qR0=qR(r,g);
+  while(r>2e-8&&n<60){var rf=Math.pow(q/(8*Math.PI*Math.sqrt(EPS0*g)),2/3);if(rf<2e-8){var dt=(r*r-4e-16)*1e12/K;t+=dt;ev.push({t:t,r:2e-8,q:q,end:true});break;}
+    t+=(r*r-rf*rf)*1e12/K;ev.push({t:t,r:rf,q:q,fis:true});q*=0.85;r=rf*Math.pow(0.98,1/3);ev.push({t:t,r:r,q:q});n++;}
+  C.ev=ev;C.nf=n;C.life=t;
+  var P=PROT[S.p],M=P[1];C.M=M;var zs=[];if(S.conf==='fenn'){for(var z=P[2];z<=P[3];z++)zs.push(z);}else{var zc=0.078*Math.sqrt(M),sz=0.6+0.06*zc;for(z=Math.max(1,Math.round(zc-2.5*sz));z<=Math.round(zc+2.5*sz);z++)zs.push(z);}
+  var zm=(zs[0]+zs[zs.length-1])/2,sw=Math.max(1,(zs[zs.length-1]-zs[0])/3.2);C.peaks=zs.map(function(z){return {z:z,mz:(M+z*MH)/z,h:0.15+0.85*Math.exp(-0.5*Math.pow((z-zm)/sw,2))};});}
+function computeMALDI(){var m=MATRIX[S.mat],A=MANA[S.ma],M=A[1],cls=A[2];C.mat=m;C.A=A;C.M=M;
+  var good=m.good[cls],rq=Math.log10(S.ratio),rf=rq<2.7?0.25:(rq>4.7?Math.max(0.2,1-(rq-4.7)*0.6):1),F=S.F;
+  C.yield=F<=1?0:Math.min(1,Math.pow(F-1,1.5))*good*rf;C.frag=clamp((F-2.2)/1.5,0,1);
+  var Rlin=1800/(1+M/25000),Rref=cls===0?15000:(M<8000?8000:Rlin);C.R=(S.refl?Rref:Rlin)*(1-0.45*C.frag);C.reflBad=S.refl&&M>8000;
+  function tof(mz,z){return S.L*Math.sqrt(mz*DA/(2*z*QE*S.Vt*1000))*1e6;}C.tof=tof;
+  var ions=[];if(C.yield>0){var I=C.yield;
+    m.ions.forEach(function(x,i){ions.push({mz:x[0],z:1,h:(0.5+0.5*(1-good))*(i===1?1:0.55)*Math.min(1,0.4+F/3),l:x[1],mat:true});});
+    ions.push({mz:M+MH,z:1,h:I,l:'[M+H]⁺',main:true});
+    ions.push({mz:(M+2*MH)/2,z:2,h:I*(cls===0?0.04:0.18),l:'[M+2H]²⁺'});
+    if(cls===0){ions.push({mz:M+22.989,z:1,h:I*0.18,l:'[M+Na]⁺'});ions.push({mz:M+38.964,z:1,h:I*0.08,l:'[M+K]⁺'});}
+    else{ions.push({mz:2*M+MH,z:1,h:I*0.07,l:'[2M+H]⁺'});ions.push({mz:(M+3*MH)/3,z:3,h:I*0.04,l:'[M+3H]³⁺'});}
+    if(C.frag>0)ions.push({mz:(M+MH)*0.72,z:1,h:I*0.25*C.frag,l:'fragments (too much laser)'});}
+  ions.forEach(function(x){x.t=tof(x.mz*x.z,x.z);});C.ions=ions;C.tMain=tof(M+MH,1);C.Eph=1239.84/S.lam;}
+function compute(){C={};if(S.mode==='esi')computeESI();else computeMALDI();}
+function fmtSci(x){return sci(x,1);}
+APP.live=function(){var L=$('live');
+  if(S.mode==='esi'){var st={none:['No spray: below onset','var(--alert)'],cone:['Stable cone-jet','var(--good)'],multi:['Unstable spray, discharge risk','var(--warn)']}[C.reg];
+    L.innerHTML='<div class="l1"><span class="h">'+PROT[S.p][0]+': +'+C.peaks[0].z+' to +'+C.peaks[C.peaks.length-1].z+'</span><span class="sub">onset '+C.Von.toFixed(2)+' kV at '+S.V.toFixed(1)+' kV</span><span class="st" style="color:'+st[1]+'">'+st[0]+'</span></div>'
+     +'<div class="l2"><span>γ = '+(C.g*1000).toFixed(1)+' mN/m</span><span>a '+S.r0+' µm droplet holds up to '+fmtSci(C.qR0/QE)+' charges</span><span>'+C.nf+' fissions in '+sig(C.life,2)+' ms</span></div>';}
+  else{var st2=C.yield<=0?['Below threshold: no ions','var(--alert)']:(C.frag>0.2?['Too much laser: fragments','var(--warn)']:(C.yield<0.15?['Weak analyte signal','var(--warn)']:['Good signal','var(--good)']));
+    L.innerHTML='<div class="l1"><span class="h">[M+H]⁺ m/z '+(C.M+MH).toFixed(C.M<2000?2:1)+'</span><span class="sub">arrives at '+C.tMain.toFixed(1)+' µs</span><span class="st" style="color:'+st2[1]+'">'+st2[0]+'</span></div>'
+     +'<div class="l2"><span>'+S.mat+' matrix, 1 : '+Math.round(S.ratio).toLocaleString('en-US')+'</span><span>'+S.lam+' nm, '+S.F.toFixed(1)+'× threshold</span><span>'+(S.refl?'reflectron':'linear')+' R ≈ '+Math.round(C.R).toLocaleString('en-US')+'</span>'+(C.reflBad?'<span style="color:var(--warn)">large ions decay in a reflectron; use linear</span>':'')+'</div>';}};
+APP.tabVals=function(){if(S.mode==='esi'){tabVal('spray',S.V.toFixed(1)+' kV');tabVal('drop',S.r0+' µm');tabVal('prot',PROT[S.p][0].split(' ')[0]);}else{tabVal('smp',S.mat);tabVal('laser',S.F.toFixed(1)+'×');tabVal('tof',S.Vt+' kV');}};
+APP.groups=function(){
+  if(S.mode==='esi')return [
+   {id:'spray',tab:'Spray',title:'Spray: voltage and solvent',render:function(b){
+     ctlChips(b,{id:'org',label:'Organic solvent mixed with water',options:[['MeOH','Methanol'],['ACN','Acetonitrile']],get:function(){return S.org;},set:function(v){S.org=v;}});
+     ctlSlider(b,{id:'x',label:'Organic solvent in the spray',min:0,max:100,step:5,get:function(){return S.x;},set:function(v){S.x=v;},fmt:function(v){return v+'%';},
+       eq:function(){return 'V<sub>on</sub> ∝ √'+R_('γ')+N_(' surface tension γ = '+(C.g*1000).toFixed(1)+' mN/m (water 72, '+ORG[S.org].n+' '+(ORG[S.org].g*1000).toFixed(1)+')');}});
+     ctlSlider(b,{id:'V',label:'Capillary voltage',min:1,max:6,step:0.1,get:function(){return S.V;},set:function(v){S.V=v;},fmt:function(v){return '+'+v.toFixed(1)+' kV';},
+       eq:function(){return 'spray when '+R_('V')+' > V<sub>on</sub>'+N_(' = '+C.Von.toFixed(2)+' kV; above about 1.6 V<sub>on</sub> the cone breaks into several jets and corona discharge becomes likely');}});
+     ctlSlider(b,{id:'d',label:'Tip-to-inlet distance, d',min:5,max:40,step:1,get:function(){return S.d;},set:function(v){S.d=v;},fmt:function(v){return v+' mm';},
+       eq:function(){return 'V<sub>on</sub> = √(r<sub>c</sub>γcos49°/2ε<sub>0</sub>) · ln(4'+R_('d')+'/r<sub>c</sub>)'+N_(' = '+C.Von.toFixed(2)+' kV');}});
+     ctlSlider(b,{id:'rc',label:'Capillary radius, r<sub>c</sub>',min:10,max:200,step:5,get:function(){return S.rc;},set:function(v){S.rc=v;},fmt:function(v){return v+' µm';},
+       eq:function(){return 'V<sub>on</sub> = √('+R_('r<sub>c</sub>')+'γcos49°/2ε<sub>0</sub>) · ln(4d/'+R_('r<sub>c</sub>')+')'+N_(' (narrow nanospray tips need far less voltage)');}});
+     ctlNote(b,'Pure water has a high surface tension, so it needs a high voltage and tends to discharge; adding methanol or acetonitrile lowers the onset voltage and gives a stable spray.');}},
+   {id:'drop',tab:'Droplet',title:'Droplets: evaporation and fission',render:function(b){
+     ctlSlider(b,{id:'r0',label:'Starting droplet radius',min:0.3,max:5,step:0.1,get:function(){return S.r0;},set:function(v){S.r0=v;},fmt:function(v){return v.toFixed(1)+' µm';},
+       eq:function(){return 'q<sub>R</sub> = 8π√(ε<sub>0</sub>γ'+R_('r')+'³)<br>'+N_('= '+sci(C.qR0,2)+' C = '+sci(C.qR0/QE,2)+' charges; the droplet starts at 70% of this');}});
+     ctlSlider(b,{id:'T',label:'Drying gas temperature',min:100,max:350,step:5,get:function(){return S.T;},set:function(v){S.T=v;},fmt:function(v){return v+' °C';},
+       eq:function(){return 'd(r²)/dt = −K('+R_('T')+')'+N_(' K = '+C.K.toFixed(2)+' µm²/ms → the first droplet lasts '+sig(C.life,2)+' ms');}});
+     ctlChips(b,{id:'an',label:'Analyte',options:[['small','Small molecule'],['protein','Peptide or protein']],get:function(){return S.an;},set:function(v){S.an=v;},
+       eq:function(){return S.an==='small'?'ion evaporation: the surface field lifts the ion out of a ~10 nm droplet':'charged residue: the droplet dries out around the molecule, which keeps its charges';}});
+     ctlNote(b,'At each fission a droplet sheds about 2% of its mass but 15% of its charge (Gomez and Tang), so the parent keeps shrinking and splitting until it is only nanometers across.');}},
+   {id:'prot',tab:'Protein',title:'Protein spectrum',render:function(b){
+     ctlSelect(b,{id:'p',label:'Protein',options:PROT.map(function(p,i){return [String(i),p[0]+' ('+(p[1]/1000).toFixed(1)+' kDa)'];}),get:function(){return String(S.p);},set:function(v){S.p=+v;S.pick=[];}});
+     ctlChips(b,{id:'conf',label:'Solution conditions',options:[['fenn','Denatured, acidic (Fenn 1989)'],['native','Native, folded']],get:function(){return S.conf;},set:function(v){S.conf=v;S.pick=[];},
+       eq:function(){return S.conf==='fenn'?'charge range observed by Fenn et al. (Table 1)':'z<sub>avg</sub> ≈ 0.078√'+R_('M')+N_(' = '+(0.078*Math.sqrt(C.M)).toFixed(1)+' (Rayleigh charge of a protein-sized droplet)');}});
+     addEq(b,'mz',function(){var t=C.peaks.reduce(function(x,y){return y.h>x.h?y:x;});return 'm/z = ('+R_('M')+' + n·m<sub>H</sub>)/n<br>'+N_('+'+t.z+': ('+C.M.toLocaleString('en-US')+' + '+t.z+' × 1.0073)/'+t.z+' = '+t.mz.toFixed(2));});
+     ctlNote(b,'Tap two neighboring peaks in the Spectrum view to work out n and M step by step.');}}];
+  return [
+   {id:'smp',tab:'Sample',title:'Sample and matrix',render:function(b){
+     ctlChips(b,{id:'mat',label:'Matrix',options:Object.keys(MATRIX).map(function(k){return [k,k];}),get:function(){return S.mat;},set:function(v){S.mat=v;},rebuild:true,
+       eq:function(){return 'M* + M → MH⁺ + (M−H)⁻; &nbsp; MH⁺ + A → AH⁺ + M';}});
+     var d=document.createElement('div');d.className='row';d.innerHTML='<div style="display:flex;align-items:center;gap:10px">'+molInline(C.mat.s(),false,8,'var(--ink)')+'<span style="font-size:.84rem">'+C.mat.n+', M = '+C.mat.M+'<br><span style="color:var(--muted)">'+{DHB:'general purpose: peptides, glycans, small proteins',CHCA:'best for peptides below about 5 kDa',SA:'best for proteins above about 10 kDa'}[S.mat]+'</span></span></div>';b.appendChild(d);
+     ctlSelect(b,{id:'ma',label:'Analyte',options:MANA.map(function(a,i){return [String(i),a[0]+' ('+a[1].toLocaleString('en-US')+' Da)'];}),get:function(){return String(S.ma);},set:function(v){S.ma=+v;}});
+     ctlSlider(b,{id:'ratio',label:'Matrix : analyte ratio',min:100,max:100000,log:true,get:function(){return S.ratio;},set:function(v){S.ratio=v;},fmt:function(v){return '1 : '+Math.round(v).toLocaleString('en-US');},
+       eq:function(){var q=Math.log10(S.ratio);return R_('ratio')+' about 10³–10⁴ keeps analyte molecules isolated in the crystals'+N_(q<2.7?': too little matrix, analyte aggregates and signal drops':(q>4.7?': too dilute, weak analyte signal':': good'));}});}},
+   {id:'laser',tab:'Laser',title:'Laser',render:function(b){
+     ctlChips(b,{id:'lam',label:'Laser wavelength',options:[[337,'337 nm (N₂)'],[355,'355 nm (Nd:YAG)']],get:function(){return S.lam;},set:function(v){S.lam=v;},
+       eq:function(){return 'E<sub>photon</sub> = hc/'+R_('λ')+N_(' = '+C.Eph.toFixed(2)+' eV, absorbed by the matrix’s aromatic ring, not by the analyte');}});
+     ctlSlider(b,{id:'F',label:'Laser fluence (× threshold)',min:0.5,max:4,step:0.05,get:function(){return S.F;},set:function(v){S.F=v;},fmt:function(v){return v.toFixed(2)+'×';},
+       eq:function(){return 'ion yield ∝ ('+R_('F')+'/F<sub>th</sub> − 1)<sup>1.5</sup> above threshold'+N_(C.yield<=0?': below threshold, nothing desorbs':(C.frag>0?': too high, ions fragment and peaks broaden':': good'));}});
+     ctlNote(b,'Operators raise the laser just above threshold: below it no plume forms, and far above it the analyte fragments and resolution drops.');}},
+   {id:'tof',tab:'Time of flight',title:'Time-of-flight analyzer',render:function(b){
+     ctlSlider(b,{id:'Vt',label:'Accelerating voltage',min:5,max:30,step:1,get:function(){return S.Vt;},set:function(v){S.Vt=v;},fmt:function(v){return '+'+v+' kV';},
+       eq:function(){return 't = L·√(m / 2ze'+R_('V')+')<br>'+N_('[M+H]⁺: '+C.tMain.toFixed(2)+' µs');}});
+     ctlSlider(b,{id:'L',label:'Flight tube length, L',min:0.5,max:3,step:0.1,get:function(){return S.L;},set:function(v){S.L=v;},fmt:function(v){return v.toFixed(1)+' m';},eq:function(){return 't = '+R_('L')+'·√(m / 2zeV)'+N_(' (a longer tube spreads arrival times apart)');}});
+     ctlChips(b,{id:'refl',label:'Mode',options:[[false,'Linear'],[true,'Reflectron']],get:function(){return S.refl;},set:function(v){S.refl=v;},
+       eq:function(){return 'R = t/(2Δt)'+N_(' ≈ '+Math.round(C.R).toLocaleString('en-US')+(S.refl?'; the ion mirror corrects for spread in starting energy':''));}});
+     ctlNote(b,'All ions get the same kinetic energy, zeV = ½mv², so lighter ions fly faster and arrive first.');}}];};
+APP.S=true;APP.reset=function(){var m=S.mode;S=D0();S.mode=m;compute();};APP.compute=compute;
+APP.hash=function(h){if(h==='maldi'||h==='esi'){S.mode=h;$('mode').value=h;compute();relabel();buildPanel();update(true);}};
+function relabel(){var lab=S.mode==='esi'?{src:'Spray',mic:'Droplet',spec:'Spectrum',cmp:'ESI vs MALDI',nums:'Numbers'}:{src:'Laser and plume',mic:'Time of flight',spec:'Spectrum',cmp:'ESI vs MALDI',nums:'Numbers'};document.querySelectorAll('#vtabs [data-view]').forEach(function(b){b.textContent=lab[b.getAttribute('data-view')];});}
+APP.init=function(){$('zf').onclick=function(){S.zoom=false;$('zf').setAttribute('aria-pressed','true');$('zz').setAttribute('aria-pressed','false');drawSpec();};$('zz').onclick=function(){S.zoom=true;$('zz').setAttribute('aria-pressed','true');$('zf').setAttribute('aria-pressed','false');drawSpec();};var sel=$('mode');sel.addEventListener('change',function(){S.mode=sel.value;compute();relabel();buildPanel();update(true);});};
+/* ---------- shared canvas helpers ---------- */
+var CV={};
+function cvGet(id){var cv=$(id),r=cv.getBoundingClientRect();if(!r.width)return null;var d=Math.min(2,window.devicePixelRatio||1);if(cv.width!==Math.round(r.width*d)||cv.height!==Math.round(r.height*d)){cv.width=Math.round(r.width*d);cv.height=Math.round(r.height*d);}var c=cv.getContext('2d');c.setTransform(d,0,0,d,0,0);return {c:c,W:r.width,H:r.height};}
+function plus(c,x,y,s,col){c.strokeStyle=col||PAL.eqr;c.lineWidth=1.6;c.beginPath();c.moveTo(x-s,y);c.lineTo(x+s,y);c.moveTo(x,y-s);c.lineTo(x,y+s);c.stroke();}
+function glyph(c,x,y,s,col){c.strokeStyle=col;c.lineWidth=1.6;c.beginPath();for(var i=0;i<5;i++)c.lineTo(x-2*s+i*s,y+(i%2?s*0.6:-s*0.6));c.stroke();}
+function hexg(c,x,y,s,col){c.strokeStyle=col;c.lineWidth=1.3;c.beginPath();for(var i=0;i<=6;i++){var a=Math.PI/3*i+Math.PI/6;c.lineTo(x+s*Math.cos(a),y+s*Math.sin(a));}c.stroke();}
+function txt(c,s,x,y,col,f,al){c.fillStyle=col||PAL.ink;c.font=f||'11px Arial';c.textAlign=al||'left';c.fillText(s,x,y);c.textAlign='left';}
+/* ---------- ESI: spray ---------- */
+var SP=null;
+function spInit(){SP={t:0,d:[],ions:[],drip:0,dy:0};}
+function spStep(dt){if(!SP)spInit();var g=cvGet('cvs');if(!g)return;var W=g.W,H=g.H,cy=H*0.46,xc=W*0.2,xi=W-46;SP.t+=dt;
+  if(C.reg==='none'){SP.drip+=dt;if(SP.drip>1.8){SP.drip=0;SP.dy=0;}return;}
+  var rate=C.reg==='cone'?7:13;if(Math.random()<rate*dt){var ang=C.reg==='cone'?gauss()*0.05:gauss()*0.35;SP.d.push({x:xc+42,y:cy+ang*20,vx:70+Math.random()*30,vy:ang*60,r:7.5,gen:0,next:0.62});}
+  SP.d.forEach(function(p){p.x+=p.vx*dt;p.y+=p.vy*dt+gauss()*0.6;p.r-=dt*(1.6+S.T/200);
+    if(p.r<7.5*p.next&&p.gen<3){p.next*=0.62;p.gen++;for(var k=0;k<2;k++)SP.d.push({x:p.x,y:p.y,vx:p.vx*1.15,vy:(k?1:-1)*(25+Math.random()*25),r:Math.max(1.6,p.r*0.35),gen:9,next:0});}
+    if(p.r<1.3||p.x>xi-6){p.dead=true;if(p.x>xi-70&&Math.abs(p.y-cy)<40)SP.ions.push({x:p.x,y:p.y});else if(p.r<1.3)SP.ions.push({x:p.x,y:p.y});}});
+  SP.d=SP.d.filter(function(p){return !p.dead&&p.y>8&&p.y<H-30;});
+  SP.ions.forEach(function(q){q.x+=110*dt;q.y+=(cy-q.y)*2.2*dt;});SP.ions=SP.ions.filter(function(q){return q.x<W-6;});}
+function spDraw(){var g=cvGet('cvs');if(!g)return;var c=g.c,W=g.W,H=g.H,cy=H*0.46,xc=W*0.2,xi=W-46;c.clearRect(0,0,W,H);if(!SP)spInit();
+  c.fillStyle=PAL.muted;c.fillRect(6,cy-7,xc-6,14);c.fillStyle=PAL.panel;c.fillRect(6,cy-4,xc-10,8);for(var i=0;i<3;i++)plus(c,20+i*((xc-30)/3),cy,3);
+  txt(c,'capillary +'+S.V.toFixed(1)+' kV',8,cy-14,PAL.eqr,'bold 11px Arial');
+  var ph=Math.min(90,cy-26);c.fillStyle=PAL.muted;c.fillRect(xi,cy-ph,7,ph-18);c.fillRect(xi,cy+18,7,ph-18);txt(c,'inlet 0 V',xi+3,cy-ph-6,PAL.c0,'bold 11px Arial','center');txt(c,'to MS ▸',W-4,cy+4,PAL.ink,'11px Arial','right');
+  txt(c,'← warm N₂ drying gas, '+S.T+' °C',W/2,58,PAL.muted,'11px Arial','center');txt(c,'electric field (+ to ground) →',W/2,H-10,PAL.muted,'11px Arial','center');
+  var lq='rgba(120,170,220,.55)';
+  if(C.reg==='none'){var rr=4+SP.drip*6,yd=SP.drip>1.4?(SP.drip-1.4)*260:0;c.fillStyle=lq;c.beginPath();c.arc(xc+rr*0.8,cy+rr*0.3+yd,rr,0,7);c.fill();
+    txt(c,'Below onset ('+C.Von.toFixed(2)+' kV): the liquid just drips',W/2,40,PAL.alert,'bold 12px Arial','center');return;}
+  var jets=C.reg==='cone'?[0]:[-0.45,0,0.4];jets.forEach(function(a){c.fillStyle=lq;c.beginPath();c.moveTo(xc,cy-7);c.lineTo(xc+26*Math.cos(a),cy+26*Math.sin(a));c.lineTo(xc,cy+7);c.fill();c.strokeStyle=lq;c.lineWidth=2;c.beginPath();c.moveTo(xc+26*Math.cos(a),cy+26*Math.sin(a));c.lineTo(xc+42*Math.cos(a),cy+42*Math.sin(a));c.stroke();});
+  if(C.reg==='multi'&&Math.random()<0.5){c.fillStyle='rgba(150,90,255,'+(0.15+Math.random()*0.25)+')';c.beginPath();c.arc(xc+6,cy,22,0,7);c.fill();}
+  SP.d.forEach(function(p){c.fillStyle=lq;c.strokeStyle='rgba(70,120,180,.8)';c.lineWidth=1;c.beginPath();c.arc(p.x,p.y,p.r,0,7);c.fill();c.stroke();if(p.r>3.5){plus(c,p.x+p.r*0.7,p.y-p.r*0.7,2);plus(c,p.x-p.r*0.7,p.y+p.r*0.5,2);glyph(c,p.x,p.y,p.r*0.28,PAL.ink);}});
+  SP.ions.forEach(function(q){glyph(c,q.x,q.y,2.2,PAL.ink);plus(c,q.x+5,q.y-4,2.2);});
+  txt(c,C.reg==='cone'?(W<520?'Cone-jet: droplets shrink, split, release ions':'Taylor cone → jet → charged droplets shrink and split → ions'):(W<520?'Far above onset: several jets, discharge':'Far above onset: several jets, unstable spray, corona discharge likely'),W/2,40,C.reg==='cone'?PAL.ink:PAL.warn,'bold 12px Arial','center');
+  txt(c,'Taylor cone',xc+4,cy+30,PAL.muted);}
+/* ---------- ESI: droplet timeline ---------- */
+var DR={t:0,off:[]};
+function drInit(){DR={t:0,off:[],nfs:0};}
+function drStep(dt){DR.t+=dt;if(DR.t>7.5)drInit();DR.off.forEach(function(o){o.x+=o.vx*dt;o.y+=o.vy*dt;o.a-=dt*0.7;});DR.off=DR.off.filter(function(o){return o.a>0;});}
+function evAt(f){var T=f*C.life,ev=C.ev,i;for(i=1;i<ev.length;i++){if(ev[i].t>=T&&!(ev[i].t===ev[i-1].t))break;}var a=ev[Math.max(0,i-1)],b=ev[Math.min(ev.length-1,i)];if(!b||b.t===a.t)return {r:a.r,q:a.q,idx:i};var u=(T-a.t)/(b.t-a.t),r=Math.sqrt(Math.max(0,a.r*a.r+(b.r*b.r-a.r*a.r)*u));return {r:r,q:a.q,idx:i};}
+function drDraw(){var g=cvGet('cvm');if(!g)return;var c=g.c,W=g.W,H=g.H;c.clearRect(0,0,W,H);
+  var PL=46,PR=46,PT=26,ph=Math.max(110,H*0.42),X=function(t){return PL+t/C.life*(W-PL-PR);},lr0=Math.log10(S.r0*1e-6),lr1=Math.log10(2e-8),Y=function(r){return PT+(lr0-Math.log10(r))/(lr0-lr1)*ph;},Yq=function(f){return PT+ph-(f/1.1)*ph;};
+  c.strokeStyle=PAL.rule;c.lineWidth=1;c.beginPath();c.moveTo(PL,PT+ph);c.lineTo(W-PR,PT+ph);c.stroke();
+  [1e-6,1e-7,1e-8*3].forEach(function(r){if(r>S.r0*1e-6||r<2e-8)return;txt(c,r>=1e-6?'1 µm':(r>=1e-7?'100 nm':'30 nm'),PL-4,Y(r)+4,PAL.c0,'10px Arial','right');});
+  txt(c,'radius',4,PT-8,PAL.c0,'bold 11px Arial');txt(c,'charge / Rayleigh limit',W-4,PT-8,PAL.c3,'bold 11px Arial','right');txt(c,'100%',W-PR+4,Yq(1)+4,PAL.c3,'10px Arial');
+  c.setLineDash([3,3]);c.strokeStyle=PAL.c3;c.beginPath();c.moveTo(PL,Yq(1));c.lineTo(W-PR,Yq(1));c.stroke();c.setLineDash([]);
+  c.strokeStyle=PAL.c0;c.lineWidth=2;c.beginPath();for(var i=0;i<=300;i++){var e=evAt(i/300);if(i)c.lineTo(X(i/300*C.life),Y(e.r));else c.moveTo(X(0),Y(e.r));}c.stroke();
+  c.strokeStyle=PAL.c3;c.lineWidth=1.6;c.beginPath();for(i=0;i<=300;i++){e=evAt(i/300);var f=e.q/qR(e.r,C.g);if(i)c.lineTo(X(i/300*C.life),Yq(Math.min(1.1,f)));else c.moveTo(X(0),Yq(f));}c.stroke();
+  txt(c,'0',PL,PT+ph+13,PAL.muted,'10px Arial','center');txt(c,sig(C.life,2)+' ms',W-PR,PT+ph+13,PAL.muted,'10px Arial','center');txt(c,'time (each red tick is a fission)',W/2,PT+ph+13,PAL.muted,'10px Arial','center');
+  C.ev.forEach(function(e){if(e.fis){c.strokeStyle=PAL.eqr;c.lineWidth=1;c.beginPath();c.moveTo(X(e.t),PT+ph-6);c.lineTo(X(e.t),PT+ph);c.stroke();}});
+  var fr=Math.min(1,DR.t/6),cur=evAt(fr),tx=X(fr*C.life);c.strokeStyle=PAL.ink;c.lineWidth=1;c.beginPath();c.moveTo(tx,PT);c.lineTo(tx,PT+ph);c.stroke();
+  var nfs=C.ev.filter(function(e){return e.fis&&e.t<=fr*C.life;}).length;if(nfs>(DR.nfs||0)){for(var k=0;k<3;k++)DR.off.push({x:0,y:0,vx:20+Math.random()*60,vy:-30-Math.random()*50,a:1});}DR.nfs=nfs;
+  var cy2=PT+ph+30+(H-PT-ph-40)/2,cx=W/2,R=6+(Math.log10(cur.r)-lr1)/(lr0-lr1)*Math.min(70,(H-PT-ph-50)/2),fq=cur.q/qR(cur.r,C.g),done=fr>=1;
+  if(!done){c.fillStyle='rgba(120,170,220,.45)';c.strokeStyle='rgba(70,120,180,.9)';c.beginPath();c.arc(cx,cy2,R,0,7);c.fill();c.stroke();
+    var nq=Math.round(6+fq*10);for(i=0;i<nq;i++){var a=i/nq*Math.PI*2;plus(c,cx+R*Math.cos(a),cy2+R*Math.sin(a),2.4);}glyph(c,cx,cy2,Math.min(8,R*0.18),PAL.ink);
+    DR.off.forEach(function(o){c.globalAlpha=o.a;c.fillStyle='rgba(120,170,220,.6)';c.beginPath();c.arc(cx+R*0.7+o.x,cy2-R*0.7+o.y,3.5,0,7);c.fill();plus(c,cx+R*0.7+o.x+3,cy2-R*0.7+o.y-3,1.6);c.globalAlpha=1;});}
+  else{glyph(c,cx,cy2,9,PAL.ink);if(S.an==='protein'){plus(c,cx-12,cy2-10,3.5);plus(c,cx+2,cy2-12,3.5);plus(c,cx+16,cy2-8,3.5);}else{plus(c,cx+16,cy2-10,3.5);}}
+  var lab=done?(S.an==='protein'?'Charged residue: the last solvent is gone and the molecule keeps its protons':'Ion evaporation: the field at a ~10 nm droplet pushes the ion out'):('r = '+(cur.r>=1e-6?(cur.r*1e6).toFixed(2)+' µm':(cur.r*1e9).toFixed(0)+' nm')+' · '+sci(cur.q/QE,2)+' charges · '+Math.round(fq*100)+'% of the Rayleigh limit');
+  txt(c,lab,cx,H-8,done?PAL.c2:PAL.ink,'bold 11.5px Arial','center');}
+/* ---------- spectra ---------- */
+function axes(svg,W,H,PL,PR,PT,PB,x0,x1,xlab,ylab){function X(v){return PL+(v-x0)/(x1-x0)*(W-PL-PR);}var st=niceStep(x1-x0,W<420?4:7);
+  for(var v=Math.ceil(x0/st)*st;v<=x1;v+=st){svg.appendChild(el('line',{x1:X(v),y1:PT,x2:X(v),y2:H-PB,'class':'gl'}));svg.appendChild(el('text',{x:X(v),y:H-PB+15,'text-anchor':'middle','class':'tk'},Math.round(v).toLocaleString('en-US')));}
+  svg.appendChild(el('line',{x1:PL,y1:H-PB,x2:W-PR,y2:H-PB,'class':'ax'}));svg.appendChild(el('text',{x:(PL+W-PR)/2,y:H-3,'text-anchor':'middle','class':'axt'},xlab));
+  if(ylab)svg.appendChild(el('text',{transform:'translate(11,'+((PT+H-PB)/2)+') rotate(-90)','text-anchor':'middle','class':'axt'},ylab));return X;}
+function esiRange(pk){var lo=pk[0].mz,hi=pk[0].mz;pk.forEach(function(p){lo=Math.min(lo,p.mz);hi=Math.max(hi,p.mz);});var pad=(hi-lo)*0.12+20;return [Math.max(0,lo-pad),hi+pad];}
+function drawESIspec(svg,pk,opt){var wh=svgSize(svg),W=wh[0],H=wh[1],PL=12,PR=12,PT=opt.PT||40,PB=34,rg=esiRange(pk),X=axes(svg,W,H,PL,PR,PT,PB,rg[0],rg[1],'m/z');function Y(h){return H-PB-h*(H-PT-PB);}
+  var lastL=-1e9,pick=opt.pick||[];pk.forEach(function(p){var sel=pick.indexOf(p.z),col=sel===0?'var(--c0)':(sel===1?'var(--c3)':'var(--navy)');if(pick.length&&sel<0)col='var(--muted)';
+    svg.appendChild(el('line',{x1:X(p.mz),y1:H-PB,x2:X(p.mz),y2:Y(p.h),stroke:col,'stroke-width':sel>=0?3:2}));
+    if(X(p.mz)-lastL>(opt.tap?30:26)||sel>=0){lastL=X(p.mz);svg.appendChild(el('text',{x:X(p.mz),y:Y(p.h)-5,'text-anchor':'middle','font-size':10,'font-weight':sel>=0?'bold':'normal',fill:col,'class':'halo'},'+'+p.z));
+      if(sel>=0)svg.appendChild(el('text',{x:X(p.mz),y:Y(p.h)-18,'text-anchor':'middle','font-size':11,'font-weight':'bold',fill:col,'class':'halo'},p.mz.toFixed(2)));}});
+  return {X:X,W:W,H:H,PL:PL,PR:PR,rg:rg};}
+function pickCalc(){var b=$('spcalc'),pk=S.pick.map(function(z){return C.peaks.filter(function(p){return p.z===z;})[0];}).filter(Boolean);
+  if(pk.length<2){b.innerHTML='<p class="calcnote">Tap two neighboring peaks to work out the charge n and the mass M, the way you would by hand.'+(pk.length?' Picked: +'+pk[0].z+' at m/z '+pk[0].mz.toFixed(2)+'.':'')+'</p>';return;}
+  pk.sort(function(a,b){return b.mz-a.mz;});var a=+pk[0].mz.toFixed(2),c2=+pk[1].mz.toFixed(2);
+  if(Math.abs(pk[0].z-pk[1].z)!==1){b.innerHTML='<p class="calcnote" style="color:var(--warn)">Those peaks are not neighbors (+'+pk[1].z+' and +'+pk[0].z+'). Pick two side-by-side peaks.</p>';return;}
+  var n=(c2-MH)/(a-c2),nr=Math.round(n),M=nr*(a-MH);
+  b.innerHTML='<ol class="steps"><li>Read the two neighboring peaks. The one at higher m/z carries fewer protons, so it has charge n: <b style="color:var(--c0)">m/z<sub>n</sub> = '+a.toFixed(2)+'</b> and <b style="color:var(--c3)">m/z<sub>n+1</sub> = '+c2.toFixed(2)+'</b>.</li>'
+   +'<li>Find the charge: n = (m/z<sub>n+1</sub> − m<sub>H</sub>)/(m/z<sub>n</sub> − m/z<sub>n+1</sub>) = ('+c2.toFixed(2)+' − 1.0073)/('+a.toFixed(2)+' − '+c2.toFixed(2)+') = '+(c2-MH).toFixed(2)+'/'+(a-c2).toFixed(2)+' = '+n.toFixed(2)+', so <b>n = '+nr+'</b>.</li>'
+   +'<li>Find the mass: M = n(m/z<sub>n</sub> − m<sub>H</sub>) = '+nr+' × ('+a.toFixed(2)+' − 1.0073) = <b>'+M.toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1})+' Da</b>. The protein’s mass is '+C.M.toLocaleString('en-US')+' Da'+(S.p===1||S.p===3?' (Fenn et al., 1989)':'')+'. Every neighboring pair gives the same M.</li></ol>';}
+function drawSpec(){if(!$('v-spec').classList.contains('on'))return;var svg=$('spsv');
+  if(S.mode==='esi'){$('spbar').style.display='none';$('spcalc').style.display='';var g=drawESIspec(svg,C.peaks,{pick:S.pick,tap:true,PT:44});
+    svg.appendChild(el('text',{x:12,y:16,'font-size':12,'font-weight':'bold',fill:'var(--ink)'},PROT[S.p][0]+': one protein, many charge states'));
+    svg.onclick=function(ev){var r=svg.getBoundingClientRect(),x=ev.clientX-r.left,best=null,bd=24;C.peaks.forEach(function(p){var d=Math.abs(g.X(p.mz)-x);if(d<bd){bd=d;best=p;}});if(!best)return;
+      var i=S.pick.indexOf(best.z);if(i>=0)S.pick.splice(i,1);else{S.pick.push(best.z);if(S.pick.length>2)S.pick.shift();}drawSpec();};
+    pickCalc();return;}
+  $('spbar').style.display='';$('spcalc').style.display='none';svg.onclick=null;var wh=svgSize(svg),W=wh[0],H=wh[1];
+  if(!C.ions.length){svg.appendChild(el('text',{x:W/2,y:H/2,'text-anchor':'middle','font-size':13,'font-weight':'bold',fill:'var(--alert)'},'No ions: raise the laser fluence above threshold'));return;}
+  var M1=C.M+MH,x0,x1;if(S.zoom){var span=Math.max(80,M1*0.035);x0=M1-span*0.5;x1=M1+span;}else{x0=0;x1=Math.max.apply(null,C.ions.map(function(i){return i.mz;}))*1.08;}
+  var PL=12,PR=12,PT=34,PB=34,X=axes(svg,W,H,PL,PR,PT,PB,x0,x1,'m/z'),mx=Math.max.apply(null,C.ions.map(function(i){return i.h;}));function Y(h){return H-PB-h/mx*(H-PT-PB)*0.92;}
+  var n=Math.round(W*1.6),d='';for(var k=0;k<=n;k++){var xv=x0+(x1-x0)*k/n,v=0;C.ions.forEach(function(io){var sg=Math.max(io.mz/C.R/2.355,(x1-x0)/W*0.7),z=(xv-io.mz)/sg;if(z>-7&&z<7)v+=io.h*Math.exp(-0.5*z*z);});d+=(d?'L':'M')+X(xv).toFixed(1)+' '+Y(v).toFixed(1);}
+  svg.appendChild(el('path',{d:d,fill:'none',stroke:'var(--navy)','stroke-width':1.5}));
+  var lastx=-1e9;C.ions.slice().sort(function(a,b){return a.mz-b.mz;}).forEach(function(io){if(io.mz<x0||io.mz>x1)return;var x=X(io.mz);if(io.mat&&!S.zoom){if(io===C.ions[1])svg.appendChild(el('text',{x:x+4,y:Y(io.h)-4,'font-size':10.5,fill:'var(--muted)','class':'halo'},'matrix ions'));return;}
+    if(x-lastx<50&&!io.main)return;lastx=x;svg.appendChild(el('text',{x:x,y:Y(io.h)-6,'text-anchor':'middle','font-size':10.5,'font-weight':io.main?'bold':'normal',fill:io.main?'var(--c0)':'var(--ink)','class':'halo'},io.l+' '+io.mz.toFixed(io.mz<3000?1:0)));});
+  svg.appendChild(el('text',{x:W-PR,y:16,'text-anchor':'end','font-size':11,fill:'var(--muted)'},'MALDI-TOF, '+(S.refl?'reflectron':'linear')+', R ≈ '+Math.round(C.R).toLocaleString('en-US')));}
+/* ---------- MALDI: laser and plume ---------- */
+var PLM=null;
+function plInit(){PLM={t:2,p:[],flash:0,msg:''};}
+function plStep(dt){if(!PLM)plInit();var g=cvGet('cvs');if(!g)return;var W=g.W,H=g.H,cy=H*0.5,xg=W*0.42;PLM.t+=dt;PLM.flash=Math.max(0,PLM.flash-dt);
+  if(PLM.t>2.6){PLM.t=0;PLM.flash=0.35;if(C.yield>0||S.F>1){var n=Math.round(clamp(30*Math.pow(Math.max(0,S.F-1),0.8),0,90)),na=Math.max(1,Math.round(n/14));
+    for(var i=0;i<n;i++)PLM.p.push({k:'m',x:62,y:cy+gauss()*10,vx:30+Math.random()*90,vy:gauss()*40,age:0});for(i=0;i<na;i++)PLM.p.push({k:'a',x:62,y:cy+gauss()*8,vx:25+Math.random()*50,vy:gauss()*25,age:0});}}
+  PLM.p.forEach(function(p){p.age+=dt;
+    if(p.k==='m'&&p.age>0.25&&!p.done&&Math.random()<0.02){p.done=true;if(Math.random()<0.5){p.k='mh';var o=PLM.p.filter(function(q){return q.k==='m'&&!q.done&&Math.abs(q.x-p.x)<30;})[0];if(o){o.k='neg';o.done=true;}PLM.msg='M* + M → MH⁺ + (M−H)⁻';}}
+    if(p.k==='mh'&&!p.passed){var a=PLM.p.filter(function(q){return q.k==='a'&&Math.abs(q.x-p.x)<40&&Math.abs(q.y-p.y)<40;})[0];if(a&&p.age>0.5){a.k='ah';p.k='m';p.passed=true;PLM.msg='MH⁺ + A → AH⁺ + M';}}
+    if(p.k==='a'&&p.age>1.1&&C.yield>0&&!p.tried){p.tried=true;if(Math.random()<0.8){p.k='ah';PLM.msg='MH⁺ + A → AH⁺ + M';}}
+    var pos=p.k==='mh'||p.k==='ah',neg=p.k==='neg';if(pos&&p.x>xg-60)p.vx+=dt*(p.k==='ah'?260:420);if(neg)p.vx-=dt*260;if(p.k==='ah'&&C.frag>0.3&&p.x>xg+60&&!p.fr&&Math.random()<C.frag*0.05){p.fr=true;PLM.p.push({k:'frag',x:p.x,y:p.y,vx:p.vx*1.2,vy:-20,age:0});}
+    p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy*=0.97;if(pos||p.k==='frag')p.y+=(cy-p.y)*1.5*dt;});
+  PLM.p=PLM.p.filter(function(p){return p.x>40&&p.x<W-24&&p.age<9;});}
+function plDraw(){var g=cvGet('cvs');if(!g)return;var c=g.c,W=g.W,H=g.H,cy=H*0.5,xg=W*0.42;c.clearRect(0,0,W,H);if(!PLM)plInit();
+  var ph=Math.min(90,cy-34);c.fillStyle=PAL.muted;c.fillRect(30,cy-ph,14,2*ph);txt(c,'target +'+S.Vt+' kV',8,cy+ph+12,PAL.eqr,'bold 11px Arial');
+  for(var i=0;i<9;i++)hexg(c,52,cy-40+i*10,4,PAL.support);txt(c,'matrix crystals',50,cy+62,PAL.muted,'10px Arial');
+  c.setLineDash([4,4]);c.strokeStyle=PAL.muted;c.beginPath();c.moveTo(xg,cy-ph);c.lineTo(xg,cy+ph);c.stroke();c.setLineDash([]);txt(c,'grid 0 V',xg+4,cy+ph+12,PAL.c0,'bold 11px Arial');
+  c.strokeStyle=PAL.rule;c.strokeRect(xg+10,cy-22,W-xg-40,44);txt(c,'flight tube (no field): lighter ions arrive first',(xg+W)/2,cy+38,PAL.muted,'10.5px Arial','center');c.fillStyle=PAL.c3;c.fillRect(W-26,cy-26,8,52);txt(c,'detector',W-22,cy+42,PAL.c3,'10px Arial','center');
+  if(PLM.flash>0){c.strokeStyle='rgba(124,58,237,'+(PLM.flash*2.5)+')';c.lineWidth=4;c.beginPath();c.moveTo(xg*0.85,10);c.lineTo(58,cy);c.stroke();txt(c,'UV laser '+S.lam+' nm',xg*0.85+6,30,'#7c3aed','bold 11px Arial');}
+  PLM.p.forEach(function(p){if(p.k==='m')hexg(c,p.x,p.y,3.4,PAL.support);else if(p.k==='mh'){hexg(c,p.x,p.y,3.6,PAL.eqr);plus(c,p.x+5,p.y-5,2);}else if(p.k==='neg'){hexg(c,p.x,p.y,3.6,PAL.c0);c.fillStyle=PAL.c0;c.fillRect(p.x+3,p.y-6,5,1.8);}
+    else if(p.k==='a')glyph(c,p.x,p.y,3.4,PAL.c0);else if(p.k==='ah'){glyph(c,p.x,p.y,3.4,PAL.c0);plus(c,p.x+8,p.y-5,2.4);}else if(p.k==='frag'){glyph(c,p.x,p.y,2,PAL.warn);}});
+  txt(c,C.yield<=0?(S.F<=1?'Below threshold: the crystal warms but nothing is ablated':'Plume forms, but this matrix and analyte give almost no ions'):(PLM.msg||'Laser pulse → matrix absorbs → plume → proton transfer'),W/2,H-10,C.yield<=0?PAL.alert:PAL.ink,'bold 12px Arial','center');
+  txt(c,'gray: matrix · red: MH⁺ · blue: analyte (AH⁺ with +)',W/2,14,PAL.muted,'10.5px Arial','center');}
+/* ---------- MALDI: time of flight ---------- */
+var TF=null;
+function tfInit(){TF={tau:0,arr:[]};}
+function tfStep(dt){if(!TF)tfInit();if(!C.ions.length)return;var tmax=Math.max.apply(null,C.ions.map(function(i){return i.t;}))*1.05;TF.tau+=dt*tmax/5;if(TF.tau>tmax*1.35){TF.tau=0;TF.arr=[];}}
+function tfDraw(){var g=cvGet('cvm');if(!g)return;var c=g.c,W=g.W,H=g.H;c.clearRect(0,0,W,H);if(!TF)tfInit();
+  if(!C.ions.length){txt(c,'No ions to fly: the laser is below threshold',W/2,H/2,PAL.alert,'bold 13px Arial','center');return;}
+  var tmax=Math.max.apply(null,C.ions.map(function(i){return i.t;}))*1.05,x0=40,x1=W-30,ty=H*0.28,ions=C.ions.filter(function(i){return i.l.indexOf('fragments')<0||true;});
+  c.strokeStyle=PAL.rule;c.strokeRect(x0,ty-26,x1-x0,52);c.fillStyle=PAL.muted;c.fillRect(x0-12,ty-30,8,60);c.fillStyle=PAL.c3;c.fillRect(x1,ty-30,8,60);
+  txt(c,'source',x0-8,ty-36,PAL.muted,'10px Arial','center');txt(c,'detector',x1+4,ty-36,PAL.c3,'10px Arial','center');txt(c,'t = '+TF.tau.toFixed(1)+' µs after the laser pulse   ·   L = '+S.L.toFixed(1)+' m, V = '+S.Vt+' kV',W/2,16,PAL.ink,'bold 12px Arial','center');
+  var lane=0;ions.forEach(function(io,i){var f=Math.min(1,TF.tau/io.t),x=x0+f*(x1-x0),y=ty-18+(i%6)*7;if(f<1){c.fillStyle=io.mat?PAL.support:(io.main?PAL.c0:PAL.c4);c.beginPath();c.arc(x,y,io.main?4.5:3,0,7);c.fill();}else if(TF.arr.indexOf(i)<0)TF.arr.push(i);});
+  var PB=26,PT=ty+50,X=function(t){return x0+t/tmax*(x1-x0);},mx=Math.max.apply(null,ions.map(function(i){return i.h;}));
+  c.strokeStyle=PAL.rule;c.beginPath();c.moveTo(x0,H-PB);c.lineTo(x1,H-PB);c.stroke();var st=niceStep(tmax,W<420?4:6);for(var t=0;t<=tmax;t+=st)txt(c,Math.round(t),X(t),H-PB+13,PAL.muted,'10px Arial','center');txt(c,'arrival time (µs)',W/2,H-4,PAL.muted,'10.5px Arial','center');
+  c.strokeStyle=PAL.navy;c.lineWidth=1.5;c.beginPath();for(var k=0;k<=600;k++){var tv=tmax*k/600,v=0;TF.arr.forEach(function(i){var io=ions[i],sg=Math.max(io.t/C.R/2,tmax/600),z=(tv-io.t)/sg;if(z>-7&&z<7)v+=io.h*Math.exp(-0.5*z*z);});var yy=H-PB-v/mx*(H-PB-PT)*0.9;if(k)c.lineTo(X(tv),yy);else c.moveTo(X(tv),yy);}c.stroke();
+  var lastx=-1e9;TF.arr.map(function(i){return ions[i];}).sort(function(a,b){return a.t-b.t;}).forEach(function(io){var x=X(io.t);if(io.mat){if(io===C.ions[1])txt(c,'matrix',x,H-PB-(io.h/mx)*(H-PB-PT)*0.9-6,PAL.muted,'10px Arial','center');return;}if(x-lastx<60&&!io.main)return;lastx=x;
+    txt(c,io.l+' '+io.t.toFixed(1)+' µs',x,H-PB-(io.h/mx)*(H-PB-PT)*0.9-6,io.main?PAL.c0:PAL.ink,(io.main?'bold ':'')+'10.5px Arial','center');});}
+/* ---------- ESI vs MALDI ---------- */
+function esiPeaksFor(M){var p=PROT.filter(function(q){return Math.abs(q[1]-M)<30;})[0],zs=[];if(p&&S.mode==='esi'&&S.conf==='native'){return C.peaks;}if(p){for(var z=p[2];z<=p[3];z++)zs.push(z);}else{var z1=Math.max(1,Math.round(M/1300)),z2=Math.max(2,Math.round(M/800));for(z=z1;z<=z2;z++)zs.push(z);}
+  var zm=(zs[0]+zs[zs.length-1])/2,sw=Math.max(1,(zs[zs.length-1]-zs[0])/3.2);return zs.map(function(z){return {z:z,mz:(M+z*MH)/z,h:0.15+0.85*Math.exp(-0.5*Math.pow((z-zm)/sw,2))};});}
+function drawCmp(){if(!$('v-cmp').classList.contains('on'))return;var M=S.mode==='esi'?C.M:C.M,name=S.mode==='esi'?PROT[S.p][0]:MANA[S.ma][0];
+  var s1=$('cmp1'),s2=$('cmp2'),pk=esiPeaksFor(M);var g=drawESIspec(s1,pk,{PT:36});s1.appendChild(el('text',{x:12,y:16,'font-size':12,'font-weight':'bold',fill:'var(--c0)'},(s1.getBoundingClientRect().width<520?'ESI: '+pk.length+' charges, m/z ':'ESI: '+pk.length+' charge states, all between m/z ')+Math.round(pk[pk.length-1].mz)+'–'+Math.round(pk[0].mz)));
+  var wh=svgSize(s2),W=wh[0],H=wh[1],PL=12,PR=12,PT=36,PB=34,mz1=M+MH,ions=[{mz:mz1,h:1,l:'[M+H]⁺'},{mz:(M+2*MH)/2,h:M<3000?0.04:0.2,l:'[M+2H]²⁺'}];if(M>3000){ions.push({mz:(M+3*MH)/3,h:0.05,l:'[M+3H]³⁺'},{mz:2*M+MH,h:0.07,l:'[2M+H]⁺'});}
+  var x1=Math.max.apply(null,ions.map(function(i){return i.mz;}))*1.08,X=axes(s2,W,H,PL,PR,PT,PB,0,x1,'m/z');ions.forEach(function(io){var y=H-PB-io.h*(H-PT-PB)*0.9;s2.appendChild(el('line',{x1:X(io.mz),y1:H-PB,x2:X(io.mz),y2:y,stroke:'var(--c3)','stroke-width':2.5}));
+    s2.appendChild(el('text',{x:X(io.mz),y:y-5,'text-anchor':'middle','font-size':10.5,'font-weight':io.h===1?'bold':'normal',fill:'var(--c3)','class':'halo'},io.l+' '+Math.round(io.mz).toLocaleString('en-US')));});
+  s2.appendChild(el('text',{x:12,y:16,'font-size':12,'font-weight':'bold',fill:'var(--c3)'},(W<520?'MALDI: mostly +1, main peak m/z ':'MALDI: mostly one proton, so the main peak sits at m/z ')+Math.round(mz1).toLocaleString('en-US')));
+  $('cmpt').textContent=name+' ('+M.toLocaleString('en-US')+' Da) by both methods';}
+/* ---------- numbers ---------- */
+function drawNums(){if(!$('v-nums').classList.contains('on'))return;var h='';
+  if(S.mode==='esi'){h='<p><b>Spray.</b> Surface tension γ = '+(C.g*1000).toFixed(1)+' mN/m; onset voltage V<sub>on</sub> = '+C.Von.toFixed(2)+' kV (Smith’s equation, Taylor cone half-angle 49.3°).</p><p><b>Droplet history</b> (starting at '+S.r0+' µm, 70% of the Rayleigh limit; each fission removes 2% of the mass and 15% of the charge):</p><div class="wrapx"><table><tr><th>Fission</th><th>Time (ms)</th><th>Radius</th><th>Charges</th></tr>';
+    var k=0;C.ev.forEach(function(e){if(!e.fis||k>=12)return;k++;h+='<tr><td>'+k+'</td><td>'+e.t.toFixed(3)+'</td><td>'+(e.r>=1e-6?(e.r*1e6).toFixed(2)+' µm':(e.r*1e9).toFixed(0)+' nm')+'</td><td>'+sci(e.q/QE,2)+'</td></tr>';});
+    h+='</table></div><p>'+C.nf+' fissions in total before the droplet reaches about 20 nm.</p><p><b>Charge states of '+PROT[S.p][0]+'</b> (M = '+C.M.toLocaleString('en-US')+' Da):</p><div class="wrapx"><table><tr><th>Charge</th><th>m/z</th></tr>'+C.peaks.slice().reverse().map(function(p){return '<tr><td>+'+p.z+'</td><td>'+p.mz.toFixed(2)+'</td></tr>';}).join('')+'</table></div>';}
+  else{h='<p><b>Matrix</b> '+C.mat.n+' (M = '+C.mat.M+'); photon energy at '+S.lam+' nm = '+C.Eph.toFixed(2)+' eV.</p><div class="wrapx"><table><tr><th>Ion</th><th>m/z</th><th>Charge</th><th>Flight time (µs)</th><th>Relative intensity</th></tr>';
+    C.ions.slice().sort(function(a,b){return a.t-b.t;}).forEach(function(io){h+='<tr><td>'+(io.mat?'matrix ':'')+io.l+'</td><td>'+io.mz.toFixed(2)+'</td><td>+'+io.z+'</td><td>'+io.t.toFixed(2)+'</td><td>'+Math.round(io.h*100)+'%</td></tr>';});
+    h+='</table></div><p>t = L√(m/2zeV) with L = '+S.L+' m and V = '+S.Vt+' kV. Peak heights are illustrative.</p>';}
+  $('nmz').innerHTML=h;}
+APP.views=[{id:'src',label:'Spray',enter:function(){spInit();plInit();},step:function(dt){if(S.mode==='esi')spStep(dt);else plStep(dt);},draw:function(){if(S.mode==='esi')spDraw();else plDraw();},reset:function(){spInit();plInit();}},
+ {id:'mic',label:'Droplet',enter:function(){drInit();tfInit();},step:function(dt){if(S.mode==='esi')drStep(dt);else tfStep(dt);},draw:function(){if(S.mode==='esi')drDraw();else tfDraw();},reset:function(){drInit();tfInit();}},
+ {id:'spec',label:'Spectrum',draw:drawSpec},{id:'cmp',label:'ESI vs MALDI',draw:drawCmp},{id:'nums',label:'Numbers',draw:drawNums}];
+
+boot();
+})();
+</script>
+</body>
+</html>
